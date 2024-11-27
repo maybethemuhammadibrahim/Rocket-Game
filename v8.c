@@ -36,7 +36,7 @@ void credits();
 
 int main() {
     mciSendString("open \"space.mp3\" type mpegvideo alias myMP3", NULL, 0, NULL);
-    mciSendString("play myMP3", NULL, 0, NULL);
+    mciSendString("play myMP3 repeat ", NULL, 0, NULL);
 
     menuScreen();
 

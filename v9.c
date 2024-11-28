@@ -2,7 +2,6 @@
 #include <stdio.h>
 #include <conio.h>
 #include <windows.h>
-// #include <mmsystem.h>
 #include <time.h>
 
 #define SCREEN_WIDTH 40
@@ -13,8 +12,10 @@
 #define PLAYER_WIDTH 3
 #define MAX_NAME_LENGTH 20
 #define MAX_HIGHSCORES 5
+#define RED "\033[0;31m"
 #define PURPLE "\033[0;35m"
 #define YELLOW "\033[0;33m"
+#define BLUE "\033[0;34m"
 #define reset "\033[0m"
 
 typedef struct {
@@ -35,6 +36,7 @@ void displayHighScores();
 void updateHighScores();
 void game();
 void credits();
+void instructions();
 
 
 int main() {
@@ -52,7 +54,7 @@ int main() {
 void game(){
     //opening sound files
     // mciSendString("open \"laser.mp3\" type mpegvideo alias laser", NULL, 0, NULL);
-    float counter=0;
+    
     char player[PLAYER_HEIGHT][PLAYER_WIDTH] = {
         {' ', '^', ' '},
         {'/', '|', '\\'},
@@ -74,14 +76,14 @@ void game(){
     
     //selecting random places for enemies to spawn
     int i, j;
-    for (i = 0; i < MAX_ENEMIES; i++) {
-        enemies[i].x = rand() % SCREEN_WIDTH;
+    for (i = 0; i<MAX_ENEMIES; i++) {
+        enemies[i].x = rand() % SCREEN_WIDTH-2;
         if(enemies[i].x == 0){
-            enemies[i].x++;
+            enemies[i].x+=2;
         }
-        else if(enemies[i].x == SCREEN_WIDTH-1){
-            enemies[i].x--;
-        }
+        // else if(enemies[i].x == SCREEN_WIDTH){
+        //     enemies[i].x--;
+        // }
         enemies[i].y = 0;
         enemies[i].active = 1;
     }
@@ -97,19 +99,19 @@ void game(){
             switch (key) {
                 case 'a':
                 case 'A':
-                    if (playerX > 0){
+                    if (playerX>0){
                         playerX--;
                     }
                     break;
                 case 'd':
                 case 'D':
-                    if (playerX < SCREEN_WIDTH - PLAYER_WIDTH){
+                    if (playerX < SCREEN_WIDTH-PLAYER_WIDTH){
                         playerX++;
                     }
                     break;
                 case ' ':
                     // shooting bullet
-                    for (i = 0; i < MAX_BULLETS; i++) {
+                    for (i = 0; i<MAX_BULLETS; i++) {
                         if (!bullets[i].active) {
                             bullets[i].x = playerX + 1;  
                             bullets[i].y = playerY - 1;
@@ -132,7 +134,7 @@ void game(){
 
         
         // if bullet is active then update its position, no printing here
-        for (i = 0; i < MAX_BULLETS; i++) {
+        for (i = 0; i<MAX_BULLETS; i++) {
             if (bullets[i].active) {
                 bullets[i].y--;
                 if (bullets[i].y < 0) {
@@ -140,14 +142,17 @@ void game(){
                 }
                 
                 // here it checks collision between enemies and bullets
-                for (j = 0; j < MAX_ENEMIES; j++) {
+                for (j = 0; j<MAX_ENEMIES; j++) {
                     if (enemies[j].active && bullets[i].x == enemies[j].x && bullets[i].y == enemies[j].y) {
                         bullets[i].active = 0;
                         enemies[j].active = 0;
                         score += 10;
                         
                         // basically spawning new enemies
-                        enemies[j].x = rand() % SCREEN_WIDTH;
+                        enemies[j].x = rand() % SCREEN_WIDTH-2;
+                        if(enemies[j].x == 0){
+                            enemies[j].x+=2;
+                        }
                         enemies[j].y = 0;
                         enemies[j].active = 1;
                     }
@@ -156,20 +161,23 @@ void game(){
         }
         
         // if enemy is active then update its position, no printing here
-        static int enemyMoveCounter = 0;
-        if (++enemyMoveCounter >= 10) {
-            enemyMoveCounter = 0;
-            for (i = 0; i < MAX_ENEMIES; i++) {
+        static int enemyMoveDelay = 0;
+        if (++enemyMoveDelay >= 7) {
+            enemyMoveDelay = 0;
+            for (i = 0; i<MAX_ENEMIES; i++) {
                 if (enemies[i].active) {
                     enemies[i].y++;
                     if (enemies[i].y >= SCREEN_HEIGHT) {
                         enemies[i].y = 0;
-                        enemies[i].x = rand() % SCREEN_WIDTH;
+                        enemies[i].x = rand() % SCREEN_WIDTH-2;
+                        if(enemies[i].x == 0){
+                            enemies[i].x++;
+                        }
                         score -= 10;
                     }
                     
-                    // here it checks if the player collides with bullet
-                    for (j = 0; j < PLAYER_HEIGHT; j++) {
+                    // here it checks if the player collides with enemy
+                    for (j = 0; j<PLAYER_HEIGHT; j++) {
                         for (int k = 0; k < PLAYER_WIDTH; k++) {
                             if (enemies[i].x == playerX + k && enemies[i].y == playerY + j) {
                                 gameOver = 1;
@@ -182,33 +190,40 @@ void game(){
         
         // All the printing is done here
         // enemies
-        for (i = 0; i < MAX_ENEMIES; i++) {
+        for (i = 0; i<MAX_ENEMIES; i++) {
             if (enemies[i].active) {
-                gotoxy(enemies[i].x, enemies[i].y);
+                gotoxy(enemies[i].x, enemies[i].y) ;
+                printf(RED);
                 putchar('V');
+                printf(reset);
             }
         }
         
         // bullets
-        for (i = 0; i < MAX_BULLETS; i++) {
+        for (i = 0; i<MAX_BULLETS; i++) {
             if (bullets[i].active) {
                 gotoxy(bullets[i].x, bullets[i].y);
+                printf(BLUE);
                 putchar('|');
+                printf(reset);
             }
         }
         
         // player
-        for (i = 0; i < PLAYER_HEIGHT; i++) {
+        for (i = 0; i<PLAYER_HEIGHT; i++) {
             for (j = 0; j < PLAYER_WIDTH; j++) {
                 gotoxy(playerX + j, playerY + i);
+                printf(YELLOW);
                 putchar(player[i][j]);
+                printf(reset);
             }
         }
         
         // Control game speed
-        Sleep(50+counter);
-        counter -= 0.05 ;
-          // 50ms delay (20 FPS)
+        static float counter=50;
+        counter-=0.2;
+        if (counter<20) counter=20;
+        Sleep(counter);
     }
     
 
@@ -223,7 +238,6 @@ void game(){
     _getch();
     
 }
-
 
 void menuScreen(){
     int choice = 0;
@@ -248,11 +262,15 @@ void menuScreen(){
         printf("%s High Scores"reset, choice == 1 ? YELLOW">" : " ");
 
         gotoxy(15, 12);
-        printf("%s Credits"reset, choice == 2 ? YELLOW">" : " ");
+        printf("%s Instructions"reset, choice == 2 ? YELLOW">" : " ");
         
         gotoxy(15, 14);
-        printf("%s Exit"reset, choice == 3 ? YELLOW">" : " ");
+        printf("%s Credits"reset, choice == 3 ? YELLOW">" : " ");
+
+        gotoxy(15, 16);
+        printf("%s Exit"reset, choice == 4 ? YELLOW">" : " ");
         
+        hideCursor();
         key = _getch();
         
         // mciSendString("play myMP3", NULL, 0, NULL);
@@ -269,7 +287,7 @@ void menuScreen(){
                 break;
             case 's':
             case 'S':
-                if(choice < 3){
+                if(choice < 4){
                     choice = choice+1;
 
                 }
@@ -284,9 +302,12 @@ void menuScreen(){
                         displayHighScores();
                         break;
                     case 2:  
-                        credits();
+                        instructions();
                         break;
                     case 3:
+                        credits();
+                        break;
+                    case 4:
                         return;
                 }
                 break;
@@ -322,8 +343,6 @@ void credits(){
     // printf("\033[0m");
     printf("\nHasnain[24K-0516]");
     _getch();
-
-    
 }
 
 void hideCursor() {
@@ -427,4 +446,19 @@ void gotoxy(int x, int y) {
     coord.X = x;
     coord.Y = y;
     SetConsoleCursorPosition(GetStdHandle(STD_OUTPUT_HANDLE), coord);
+}
+
+void instructions(){
+    system("cls");
+    gotoxy(10, 2);
+    printf(PURPLE "\nInstructions:");
+    printf("\n====================================" reset);
+    printf("\n");
+    printf(YELLOW "\n'A' or 'a' to move to to left\n'D' or 'd' to move to right\n" );
+    printf(reset);
+    printf(RED "\nSpace to shoot\n");
+    printf(reset);
+    printf(BLUE "\n'Q' or 'q' to quit");
+    printf(reset);
+    _getch();
 }

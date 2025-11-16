@@ -29,31 +29,15 @@ typedef struct {
     int score;
 } HighScore;
 
-void gotoxy(int, int);
+void gotoxy();
 void hideCursor();
 void menuScreen();
 void displayHighScores();
-void updateHighScores(int);
+void updateHighScores();
 void game();
 void credits();
 void instructions();
-void spawn(Entity *enemies, int i){
-    int d;
-    enemies[i].x = rand() % SCREEN_WIDTH-2;
-    if(enemies[i].x == 0){
-        enemies[i].x+=2;
-    }
-    // for (d=0; d<MAX_ENEMIES; d++){
-    //     while (enemies[i].x==enemies[d].x||enemies[i].x==enemies[d].x+1||enemies[i].x==enemies[d].x-1){
-    //         enemies[i].x = rand() % SCREEN_WIDTH-2;
-    //         if(enemies[i].x == 0){
-    //             enemies[i].x+=2;
-    //         }
-    //     }
-    // }
-    enemies[i].y = 0;
-    enemies[i].active = 1;
-}
+
 
 int main() {
     //sir's code for opening sound files
@@ -93,7 +77,15 @@ void game(){
     //selecting random places for enemies to spawn
     int i, j;
     for (i = 0; i<MAX_ENEMIES; i++) {
-        spawn(enemies, i);
+        enemies[i].x = rand() % SCREEN_WIDTH-2;
+        if(enemies[i].x == 0){
+            enemies[i].x+=2;
+        }
+        // else if(enemies[i].x == SCREEN_WIDTH){
+        //     enemies[i].x--;
+        // }
+        enemies[i].y = 0;
+        enemies[i].active = 1;
     }
     
     while (!gameOver) {
@@ -151,13 +143,18 @@ void game(){
                 
                 // here it checks collision between enemies and bullets
                 for (j = 0; j<MAX_ENEMIES; j++) {
-                    if (enemies[j].active && bullets[i].x == enemies[j].x && (bullets[i].y == enemies[j].y||bullets[i].y == enemies[j].y+1)) {
+                    if (enemies[j].active && bullets[i].x == enemies[j].x && bullets[i].y == enemies[j].y) {
                         bullets[i].active = 0;
                         enemies[j].active = 0;
                         score += 10;
                         
                         // basically spawning new enemies
-                        spawn(enemies, j);
+                        enemies[j].x = rand() % SCREEN_WIDTH-2;
+                        if(enemies[j].x == 0){
+                            enemies[j].x+=2;
+                        }
+                        enemies[j].y = 0;
+                        enemies[j].active = 1;
                     }
                 }
             }
@@ -165,13 +162,17 @@ void game(){
         
         // if enemy is active then update its position, no printing here
         static int enemyMoveDelay = 0;
-        if (++enemyMoveDelay >= 12) {
+        if (++enemyMoveDelay >= 7) {
             enemyMoveDelay = 0;
             for (i = 0; i<MAX_ENEMIES; i++) {
                 if (enemies[i].active) {
                     enemies[i].y++;
                     if (enemies[i].y >= SCREEN_HEIGHT) {
-                        spawn(enemies, i);
+                        enemies[i].y = 0;
+                        enemies[i].x = rand() % SCREEN_WIDTH-2;
+                        if(enemies[i].x == 0){
+                            enemies[i].x++;
+                        }
                         score -= 10;
                     }
                     
@@ -191,7 +192,7 @@ void game(){
         // enemies
         for (i = 0; i<MAX_ENEMIES; i++) {
             if (enemies[i].active) {
-                gotoxy(enemies[i].x, enemies[i].y);
+                gotoxy(enemies[i].x, enemies[i].y) ;
                 printf(RED);
                 putchar('V');
                 printf(reset);
@@ -219,9 +220,9 @@ void game(){
         }
         
         // Control game speed
-        static float counter=40;
-        counter-=0.09;
-        if (counter<10) counter=10;
+        static float counter=50;
+        counter-=0.2;
+        if (counter<20) counter=20;
         Sleep(counter);
     }
     
